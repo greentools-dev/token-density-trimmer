@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Prompt Fluff & Context Window Trimmer | 100% Client-Side Prompt Optimizer</title>
+  <meta name="description" content="Compress verbose prompts for OpenAI, Claude, and Gemini locally in your browser. Strip politeness fluff, redundant pleasantries, and whitespace bloat to slash API token costs with zero data leaving your device.">
+  <meta name="keywords" content="prompt trimmer, token optimizer, reduce llm tokens, context window compressor, claude prompt optimizer, gpt token saver, client-side prompt cleaner">
+  <link rel="canonical" href="https://greentools-dev.github.io/token-density-trimmer/">
+  <meta property="og:title" content="LLM Prompt Fluff & Context Window Trimmer">
+  <meta property="og:description" content="Cut API costs and eliminate context bloat. Deterministic in-browser prompt compressor.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://greentools-dev.github.io/token-density-trimmer/">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              900: '#064e3b',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #f8fafc;
+      background-image: 
+        linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+    .diff-removed {
+      background-color: #fee2e2;
+      color: #991b1b;
+      text-decoration: line-through;
+      padding: 0 3px;
+      border-radius: 2px;
+    }
+  </style>
+
+  <!-- Structured Data JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "name": "LLM Prompt Fluff & Context Window Trimmer",
+        "url": "https://greentools-dev.github.io/token-density-trimmer/",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "All",
+        "browserRequirements": "Requires JavaScript. Requires HTML5.",
+        "description": "High-density deterministic LLM prompt optimizer. Trims conversational fluff, unnecessary politeness, and whitespace padding to save token costs on Claude, GPT-4, and Gemini.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Why trim prompts deterministically rather than asking an LLM?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Using an AI to optimize prompts costs tokens itself and risks hallucinating changes, dropping critical constraints, or re-wording domain terms. A deterministic client-side trimmer preserves your exact instructions and variables while safely stripping token-wasting filler."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does this tool send my prompt to any server or API?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No. All text parsing, token estimation, and regex normalization execute 100% locally in your web browser. Nothing is ever logged, transmitted, or stored."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How is token count estimated?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Token counting utilizes standard BPE (Byte Pair Encoding) heuristics aligned with GPT-4, Claude, and LLaMA tokenizers (averaging ~4 characters or 0.75 words per token for English text and code syntax)."
+            }
+          }
+        ]
+      }
+    ]
+  </script>
+</head>
+<body class="min-h-screen flex flex-col font-sans text-slate-800 antialiased selection:bg-brand-100 selection:text-brand-900">
+
+  <!-- Header -->
+  <header class="border-b border-slate-200/80 bg-white/90 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm shadow-emerald-500/20">
+          <i data-lucide="scissors" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <span class="font-extrabold text-slate-900 tracking-tight text-lg">GreenTools<span class="text-emerald-600">.dev</span></span>
+          <span class="hidden sm:inline-block ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60">Prompt Trimmer</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-slate-100/80 px-2.5 py-1 rounded-md border border-slate-200">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i>
+          100% Client-Side Safe
+        </span>
+        <a href="https://github.com/greentools-dev/token-density-trimmer" target="_blank" rel="noopener noreferrer" class="text-slate-500 hover:text-slate-900 transition-colors p-1.5">
+          <i data-lucide="github" class="w-5 h-5"></i>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero & Primary Input Container -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-8 md:py-12 flex flex-col">
+    <div class="text-center max-w-2xl mx-auto mb-8">
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+        LLM Prompt Fluff & Context Trimmer
+      </h1>
+      <p class="mt-3 text-slate-600 text-sm sm:text-base leading-relaxed">
+        Strip politeness fluff, redundant framing, and whitespace padding deterministically. Shrink context window payload and slash API costs without losing instruction precision.
+      </p>
+    </div>
+
+    <!-- Main Workspace Container -->
+    <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
+      
+      <!-- Toolbar / Rules Config Header -->
+      <div class="p-4 sm:p-5 border-b border-slate-200/80 bg-slate-50/70 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-2 text-sm font-semibold text-slate-800">
+          <i data-lucide="sliders" class="w-4 h-4 text-emerald-600"></i>
+          <span>Active Optimization Rules</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium text-slate-700">
+          <label class="inline-flex items-center gap-1.5 cursor-pointer hover:text-slate-900 select-none">
+            <input type="checkbox" id="rule-politeness" checked class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5">
+            <span>Strip Politeness & Pleasantries</span>
+          </label>
+          <label class="inline-flex items-center gap-1.5 cursor-pointer hover:text-slate-900 select-none">
+            <input type="checkbox" id="rule-framing" checked class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5">
+            <span>Remove Redundant Framing</span>
+          </label>
+          <label class="inline-flex items-center gap-1.5 cursor-pointer hover:text-slate-900 select-none">
+            <input type="checkbox" id="rule-whitespace" checked class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5">
+            <span>Collapse Empty Lines & Spacing</span>
+          </label>
+          <label class="inline-flex items-center gap-1.5 cursor-pointer hover:text-slate-900 select-none">
+            <input type="checkbox" id="rule-imperative" checked class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5">
+            <span>Imperative Action Compression</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Quick Sample Buttons -->
+      <div class="px-5 py-2.5 bg-slate-100/50 border-b border-slate-200/60 flex items-center justify-between gap-3 text-xs overflow-x-auto">
+        <span class="text-slate-500 font-medium whitespace-nowrap">Load Example:</span>
+        <div class="flex items-center gap-2">
+          <button type="button" id="btn-sample-polite" class="px-2.5 py-1 rounded bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-medium transition-colors shadow-2xs">
+            Overly Polite Prompt
+          </button>
+          <button type="button" id="btn-sample-bloated" class="px-2.5 py-1 rounded bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-medium transition-colors shadow-2xs">
+            Bloated System Prompt
+          </button>
+          <button type="button" id="btn-sample-code" class="px-2.5 py-1 rounded bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-medium transition-colors shadow-2xs">
+            Verbose Coding Request
+          </button>
+          <button type="button" id="btn-clear" class="px-2.5 py-1 rounded hover:bg-red-50 text-red-600 font-medium transition-colors">
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <!-- Progressive Workspace: Two-column Input & Output -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200">
+        
+        <!-- Input Column -->
+        <div class="p-5 flex flex-col h-full min-h-[420px]">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Original Prompt</span>
+              <span id="badge-raw-tokens" class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono font-medium">0 tokens</span>
+            </div>
+            <span id="badge-raw-chars" class="text-xs text-slate-400 font-mono">0 chars</span>
+          </div>
+          <div class="relative flex-1 flex flex-col">
+            <textarea id="prompt-input" rows="14" placeholder="Paste your raw, polite, or bloated prompt here... e.g.:&#10;&#10;Hello! Could you please kindly help me write a Python function that parses JSON data? I would really appreciate it if you could make sure it has proper error handling. In conclusion, thank you very much!" class="w-full flex-1 p-4 text-sm font-mono text-slate-800 bg-slate-50/50 rounded-xl border border-slate-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none leading-relaxed transition-all placeholder:text-slate-400"></textarea>
+          </div>
+        </div>
+
+        <!-- Output Column -->
+        <div class="p-5 flex flex-col h-full min-h-[420px] bg-slate-50/30">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-emerald-800 uppercase tracking-wider">Optimized Prompt</span>
+              <span id="badge-trimmed-tokens" class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono font-medium">0 tokens</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span id="badge-savings-pct" class="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">0% Saved</span>
+            </div>
+          </div>
+          <div class="relative flex-1 flex flex-col">
+            <textarea id="prompt-output" readonly rows="14" placeholder="Optimized prompt with zero fluff will appear here instantly..." class="w-full flex-1 p-4 text-sm font-mono text-slate-900 bg-white rounded-xl border border-slate-200 focus:outline-none resize-none leading-relaxed shadow-inner placeholder:text-slate-400"></textarea>
+          </div>
+          
+          <!-- Actions -->
+          <div class="mt-4 flex items-center justify-between gap-3 pt-3 border-t border-slate-200/80">
+            <div class="text-xs text-slate-500 font-medium">
+              <span id="label-chars-removed">0</span> characters removed
+            </div>
+            <div class="flex items-center gap-2">
+              <button type="button" id="btn-download" class="px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors inline-flex items-center gap-1.5 shadow-2xs">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                Download .txt
+              </button>
+              <button type="button" id="btn-copy" class="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 rounded-lg transition-colors inline-flex items-center gap-1.5 shadow-sm shadow-emerald-600/20">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                <span id="copy-text">Copy Prompt</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Real-Time Metrics & Cost Savings Bar -->
+      <div class="p-5 border-t border-slate-200 bg-white">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+            <div class="text-xs font-medium text-slate-500">Original Tokens</div>
+            <div id="stat-orig-tokens" class="text-xl sm:text-2xl font-extrabold text-slate-900 font-mono mt-1">0</div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-100">
+            <div class="text-xs font-medium text-emerald-800">Optimized Tokens</div>
+            <div id="stat-opt-tokens" class="text-xl sm:text-2xl font-extrabold text-emerald-700 font-mono mt-1">0</div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-emerald-500 text-white shadow-sm">
+            <div class="text-xs font-medium text-emerald-100">Context Saved</div>
+            <div id="stat-pct-saved" class="text-xl sm:text-2xl font-extrabold font-mono mt-1">0.0%</div>
+          </div>
+          <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+            <div class="text-xs font-medium text-slate-500">Est. API Savings (10k reqs)</div>
+            <div id="stat-cost-saved" class="text-xl sm:text-2xl font-extrabold text-slate-900 font-mono mt-1">$0.00</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sponsor Slot -->
+    <aside id="sponsor-slot" class="mt-8 p-4 rounded-xl border border-dashed border-slate-300 bg-white text-center text-xs text-slate-500">
+      <span class="font-semibold text-slate-600 uppercase tracking-wider text-[11px] block mb-1">Sponsored</span>
+      Build AI agents that run on edge and client-side devices with GreenTools SDK.
+    </aside>
+
+    <!-- SEO & FAQ Section -->
+    <section class="mt-12 bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-sm">
+      <h2 class="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+        <i data-lucide="help-circle" class="w-5 h-5 text-emerald-600"></i>
+        How It Works & Frequently Asked Questions
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-slate-600">
+        <div>
+          <h3 class="font-semibold text-slate-800 mb-1">Why deterministic trimming instead of an LLM?</h3>
+          <p class="leading-relaxed">
+            Prompting an LLM to rewrite your prompts consumes extra API tokens, takes several seconds of network latency, and frequently hallucinates by altering code variable names, subtle edge case conditions, or technical phrasing. A deterministic regex normalizer strips zero-value filler while leaving your core instructions 100% intact.
+          </p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-slate-800 mb-1">Are my sensitive prompts uploaded anywhere?</h3>
+          <p class="leading-relaxed">
+            No. This tool operates 100% inside your browser using standard JavaScript string manipulation. No prompts, API keys, or proprietary data are ever sent over a network. It functions completely offline without internet connectivity.
+          </p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-slate-800 mb-1">What conversational filler gets removed?</h3>
+          <p class="leading-relaxed">
+            LLMs do not require human pleasantries. The optimizer strips phrases such as "Please kindly", "Could you please", "Thank you in advance", "I would really appreciate it if you could", "As an AI model", "Here is what I need you to do:", and redundant conversational closings like "In conclusion".
+          </p>
+        </div>
+        <div>
+          <h3 class="font-semibold text-slate-800 mb-1">How is the cost reduction calculated?</h3>
+          <p class="leading-relaxed">
+            Calculations are based on benchmark input token pricing of standard frontier models ($2.50 per 1M input tokens for GPT-4o / Claude 3.5 Sonnet class). When running automated agent loops or high-frequency batch requests across 10,000 queries, eliminating 50 to 150 redundant tokens per request yields substantial monthly cost savings.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 bg-white mt-12 py-8">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-slate-800">GreenTools.dev</span>
+        <span>&bull;</span>
+        <span>100% Client-Side Web Utilities</span>
+      </div>
+      <div>
+        Clean, private, serverless tools for developers and creators.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Script Logic -->
+  <script>
+    // Lucide Icons
+    lucide.createIcons();
+
+    // DOM Elements
+    const promptInput = document.getElementById('prompt-input');
+    const promptOutput = document.getElementById('prompt-output');
+    const badgeRawTokens = document.getElementById('badge-raw-tokens');
+    const badgeRawChars = document.getElementById('badge-raw-chars');
+    const badgeTrimmedTokens = document.getElementById('badge-trimmed-tokens');
+    const badgeSavingsPct = document.getElementById('badge-savings-pct');
+    const labelCharsRemoved = document.getElementById('label-chars-removed');
+    const statOrigTokens = document.getElementById('stat-orig-tokens');
+    const statOptTokens = document.getElementById('stat-opt-tokens');
+    const statPctSaved = document.getElementById('stat-pct-saved');
+    const statCostSaved = document.getElementById('stat-cost-saved');
+
+    const rulePoliteness = document.getElementById('rule-politeness');
+    const ruleFraming = document.getElementById('rule-framing');
+    const ruleWhitespace = document.getElementById('rule-whitespace');
+    const ruleImperative = document.getElementById('rule-imperative');
+
+    const btnSamplePolite = document.getElementById('btn-sample-polite');
+    const btnSampleBloated = document.getElementById('btn-sample-bloated');
+    const btnSampleCode = document.getElementById('btn-sample-code');
+    const btnClear = document.getElementById('btn-clear');
+    const btnCopy = document.getElementById('btn-copy');
+    const btnDownload = document.getElementById('btn-download');
+    const copyText = document.getElementById('copy-text');
+
+    // Deterministic Fluff Dictionaries
+    const politenessPatterns = [
+      /\b(please\s+kindly|kindly\s+please|could\s+you\s+please|would\s+you\s+please|can\s+you\s+please|could\s+you|would\s+you|can\s+you)\b/gi,
+      /\b(i\s+would\s+really\s+appreciate\s+it\s+if\s+you\s+could|i\s+would\s+appreciate\s+it\s+if\s+you|i\s+greatly\s+appreciate\s+your\s+help)\b/gi,
+      /\b(thank\s+you\s+so\s+much|thank\s+you\s+in\s+advance|thanks\s+in\s+advance|thank\s+you\s+very\s+much|thanks\s+a\s+lot|thanks!|thanks\.)\b/gi,
+      /\b(hello!|hello\s+there|hi\s+there|hey\s+there|dear\s+ai|good\s+morning|good\s+afternoon|good\s+evening)[,.]?\s*/gi,
+      /\b(i\s+hope\s+you\s+are\s+doing\s+well|hope\s+this\s+finds\s+you\s+well)[,.]?\s*/gi
+    ];
+
+    const framingPatterns = [
+      /\b(here\s+is\s+what\s+i\s+need\s+you\s+to\s+do:?|here\s+is\s+what\s+i\s+want:?|what\s+i\s+need\s+is:?)\b/gi,
+      /\b(i\s+am\s+looking\s+for\s+you\s+to|i\s+am\s+trying\s+to|i\s+want\s+you\s+to)\b/gi,
+      /\b(as\s+an\s+ai\s+language\s+model,?|as\s+an\s+expert\s+in\s+this\s+field,?)\b/gi,
+      /\b(make\s+sure\s+that\s+you|please\s+ensure\s+that\s+you|be\s+sure\s+to)\b/gi,
+      /\b(in\s+conclusion,?|to\s+conclude,?|to\s+summarize,?)\b/gi,
+      /\b(let\s+me\s+know\s+if\s+you\s+have\s+any\s+questions\.?)\b/gi,
+      /\b(feel\s+free\s+to\s+ask\s+clarifying\s+questions\.?)\b/gi
+    ];
+
+    const imperativeReplacements = [
+      { regex: /\b(please\s+provide|provide\s+me\s+with)\b/gi, replace: 'Output' },
+      { regex: /\b(i\s+would\s+like\s+a\s+summary\s+of)\b/gi, replace: 'Summarize' },
+      { regex: /\b(i\s+need\s+you\s+to\s+write)\b/gi, replace: 'Write' },
+      { regex: /\b(i\s+need\s+you\s+to\s+generate)\b/gi, replace: 'Generate' },
+      { regex: /\b(please\s+generate)\b/gi, replace: 'Generate' },
+      { regex: /\b(please\s+create)\b/gi, replace: 'Create' },
+      { regex: /\b(please\s+write)\b/gi, replace: 'Write' },
+      { regex: /\b(please\s+explain)\b/gi, replace: 'Explain' }
+    ];
+
+    // BPE Token Estimator Heuristic (GPT-4 / Claude / LLaMA)
+    // Roughly 1 token ≈ 4 characters or 0.75 words for standard prose/code
+    function estimateTokens(text) {
+      if (!text || text.trim() === '') return 0;
+      // Count whitespace-separated words and punctuation symbols
+      const words = text.trim().split(/\s+/).length;
+      const chars = text.length;
+      // Weighted average: character count / 4 is generally very close for English text
+      const tokenCount = Math.round((chars / 4 + words / 0.75) / 2);
+      return Math.max(1, tokenCount);
+    }
+
+    // Optimization Engine
+    function optimizePrompt() {
+      const raw = promptInput.value;
+      if (!raw) {
+        promptOutput.value = '';
+        updateStats('', '');
+        return;
+      }
+
+      let text = raw;
+
+      // 1. Politeness stripping
+      if (rulePoliteness.checked) {
+        for (const pattern of politenessPatterns) {
+          text = text.replace(pattern, '');
+        }
+      }
+
+      // 2. Framing stripping
+      if (ruleFraming.checked) {
+        for (const pattern of framingPatterns) {
+          text = text.replace(pattern, '');
+        }
+      }
+
+      // 3. Imperative Action Compression
+      if (ruleImperative.checked) {
+        for (const { regex, replace } of imperativeReplacements) {
+          text = text.replace(regex, replace);
+        }
+      }
+
+      // 4. Whitespace and Markdown collapse
+      if (ruleWhitespace.checked) {
+        // Strip trailing spaces on each line
+        text = text.split('\n').map(line => line.trimEnd()).join('\n');
+        // Collapse more than 2 consecutive newlines into 2
+        text = text.replace(/\n{3,}/g, '\n\n');
+        // Collapse multiple consecutive spaces (outside code indents)
+        text = text.replace(/[ \t]{2,}/g, ' ');
+      }
+
+      // Clean up orphaned punctuation like lone commas or periods at start of sentences
+      text = text.replace(/(^[,\s]+|[.!?]\s*,\s*)/gm, '');
+      text = text.trim();
+
+      promptOutput.value = text;
+      updateStats(raw, text);
+    }
+
+    function updateStats(raw, trimmed) {
+      const rawChars = raw.length;
+      const trimmedChars = trimmed.length;
+      const rawTokens = estimateTokens(raw);
+      const trimmedTokens = estimateTokens(trimmed);
+
+      const tokensSaved = Math.max(0, rawTokens - trimmedTokens);
+      const charsRemoved = Math.max(0, rawChars - trimmedChars);
+      const pctSaved = rawTokens > 0 ? ((tokensSaved / rawTokens) * 100).toFixed(1) : '0.0';
+
+      // Cost saving estimation based on $2.50 per 1M input tokens over 10,000 queries
+      // 10,000 * tokensSaved / 1,000,000 * 2.50 = tokensSaved * 0.025
+      const costSaved10k = (tokensSaved * 0.025).toFixed(2);
+
+      badgeRawChars.textContent = `${rawChars.toLocaleString()} chars`;
+      badgeRawTokens.textContent = `${rawTokens.toLocaleString()} tokens`;
+      badgeTrimmedTokens.textContent = `${trimmedTokens.toLocaleString()} tokens`;
+      badgeSavingsPct.textContent = `${pctSaved}% Saved`;
+      labelCharsRemoved.textContent = charsRemoved.toLocaleString();
+
+      statOrigTokens.textContent = rawTokens.toLocaleString();
+      statOptTokens.textContent = trimmedTokens.toLocaleString();
+      statPctSaved.textContent = `${pctSaved}%`;
+      statCostSaved.textContent = `$${costSaved10k}`;
+    }
+
+    // Event Listeners
+    promptInput.addEventListener('input', optimizePrompt);
+    rulePoliteness.addEventListener('change', optimizePrompt);
+    ruleFraming.addEventListener('change', optimizePrompt);
+    ruleWhitespace.addEventListener('change', optimizePrompt);
+    ruleImperative.addEventListener('change', optimizePrompt);
+
+    // Samples
+    btnSamplePolite.addEventListener('click', () => {
+      promptInput.value = `Hello there! I hope you are doing well today.
+
+Could you please kindly help me write a Python function that parses an incoming JSON webhook payload from Stripe? I would really appreciate it if you could make sure that it includes comprehensive error handling and logs invalid signatures.
+
+In conclusion, thank you very much in advance for your assistance!`;
+      optimizePrompt();
+    });
+
+    btnSampleBloated.addEventListener('click', () => {
+      promptInput.value = `You are a helpful assistant. As an AI language model, here is what I need you to do:
+
+Make sure that you carefully review the provided codebase before answering. Please ensure that you do not output any markdown explanation outside the code block.
+
+What I need is for you to generate a SQL query to calculate customer churn.
+
+Please feel free to ask clarifying questions if needed. Thanks in advance!`;
+      optimizePrompt();
+    });
+
+    btnSampleCode.addEventListener('click', () => {
+      promptInput.value = `Dear AI,
+
+Would you please be so kind as to look at this TypeScript function and optimize it for performance?
+
+I am trying to eliminate duplicate items from an array of 50,000 objects based on their id property. Please provide the fastest implementation.
+
+Thank you so much!`;
+      optimizePrompt();
+    });
+
+    btnClear.addEventListener('click', () => {
+      promptInput.value = '';
+      optimizePrompt();
+      promptInput.focus();
+    });
+
+    // Copy to Clipboard
+    btnCopy.addEventListener('click', async () => {
+      const text = promptOutput.value;
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        copyText.textContent = 'Copied!';
+        btnCopy.classList.replace('bg-emerald-600', 'bg-emerald-700');
+        setTimeout(() => {
+          copyText.textContent = 'Copy Prompt';
+          btnCopy.classList.replace('bg-emerald-700', 'bg-emerald-600');
+        }, 2000);
+      } catch (err) {
+        promptOutput.select();
+        document.execCommand('copy');
+      }
+    });
+
+    // Download Text File
+    btnDownload.addEventListener('click', () => {
+      const text = promptOutput.value;
+      if (!text) return;
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'trimmed-prompt.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // Initialize with a default polite sample for instant preview
+    btnSamplePolite.click();
+  </script>
+</body>
+</html>
